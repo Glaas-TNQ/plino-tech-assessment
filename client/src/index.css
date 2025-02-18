@@ -1,13 +1,71 @@
+
+
+/* Body Styling */
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  @apply bg-background text-textDark;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Container */
+.container {
+  @apply max-w-6xl mx-auto p-6;
+}
+
+/* Titoli */
+h1 {
+  @apply text-3xl font-bold text-primary mb-6 text-center;
+}
+
+h2 {
+  @apply text-xl font-semibold text-secondary mb-4;
+}
+
+/* Card Design */
+.card {
+  @apply bg-card shadow-lg p-6 rounded-xl border border-gray-200;
+}
+
+/* Pulsanti */
+button {
+  @apply bg-primary text-white font-semibold py-2 px-4 rounded-lg transition hover:bg-opacity-80;
+}
+
+button.secondary {
+  @apply bg-secondary text-white;
+}
+
+/* Input Fields */
+input, select {
+  @apply border border-gray-300 rounded-lg py-2 px-4 w-full focus:outline-none focus:ring-2 focus:ring-primary;
+}
+
+/* Tabella */
+.table {
+  @apply w-full border-collapse mt-4;
+}
+
+th {
+  @apply bg-primary text-white text-left p-3;
+}
+
+td {
+  @apply border-b border-gray-200 p-3 text-textDark;
+}
+
+/* Flexbox Utility per allineamento */
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.flex-between {
+  @apply flex items-center justify-between;
+}
+
+/* Animazioni */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
 }

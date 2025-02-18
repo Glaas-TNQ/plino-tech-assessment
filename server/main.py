@@ -6,6 +6,7 @@ import os
 import random
 
 from fastapi import FastAPI, status,Body,HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import (
     AsyncIOMotorClient,
     AsyncIOMotorCollection,
@@ -14,6 +15,16 @@ from pydantic import BaseModel
 
 
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Permette richieste dal frontend React
+    allow_credentials=True,
+    allow_methods=["*"],  # Permette tutti i metodi (GET, POST, ecc.)
+    allow_headers=["*"],  # Permette tutti gli header
+)
+
 llms_collection: AsyncIOMotorCollection = AsyncIOMotorClient(
     "mongodb://root:example@mongodb:27017"
 )["plino"]["llms"]

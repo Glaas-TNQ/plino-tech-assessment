@@ -2,7 +2,7 @@ FROM python:3.10-slim-bookworm
 ENV PYTHONUNBUFFERED=1
 WORKDIR /server
 COPY ./requirements.txt .
-COPY ../data /data
+
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
