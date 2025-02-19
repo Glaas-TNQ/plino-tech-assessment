@@ -14,20 +14,20 @@ function App() {
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
 
   useEffect(() => {
-    let ignore = false; // ✅ Variabile per ignorare il secondo render in StrictMode
+    let ignore = false; // ✅ Variable to ignore the second fetch 
 
     fetch(`${API_BASE_URL}/llms`)
     .then((res) => res.json())
     .then((data) => {
-      if (!ignore) {  // 🔥 Ignora il secondo render
-        console.log("Dati ricevuti dal backend:", data);
+      if (!ignore) {  // 🔥 Ignore the second render
+        console.log("Data receiveid from backend:", data);
         setLlms(data);
       }
     })
-    .catch((err) => console.error("Errore nel recupero degli LLM:", err));
+    .catch((err) => console.error("Error while fetching LLMs:", err));
 
   return () => {
-    ignore = true; // 🛑 Blocca il secondo fetch su StrictMode
+    ignore = true; // 🛑 Block strict mode's second fetch
   };
 }, []);
 
@@ -43,14 +43,14 @@ function App() {
       const data = await response.json();
 
       if (!response.ok) {
-        return { error: true, message: data.detail || "Errore sconosciuto." }; // ✅ Messaggio di errore
+        return { error: true, message: data.detail || "Unknown Error." }; // ✅ Error Log
       }
 
       setLlms([...llms, data.llm]);
-      return { error: false, message: "LLM aggiunto con successo!" }; // ✅ Messaggio di successo
+      return { error: false, message: "LLM successfully added!" }; // ✅ Success Log
     } catch (err) {
-      console.error("Errore nell'aggiunta LLM:", err);
-      return { error: true, message: "Errore di rete o server." };
+      console.error("Error while adding LLM:", err);
+      return { error: true, message: "Network or Server error." };
     }
   };
 
@@ -65,14 +65,14 @@ function App() {
       const data = await response.json();
   
       if (!response.ok) {
-        return { error: true, message: data.detail || "Errore sconosciuto." };
+        return { error: true, message: data.detail || "Unknown Error." };
       }
   
       setLlms([...llms, data.llm]);
-      return { error: false, message: "LLM casuale aggiunto con successo!" };
+      return { error: false, message: "Random LLM successfully added!" };
     } catch (err) {
-      console.error("Errore nell'aggiunta LLM Random:", err);
-      return { error: true, message: "Errore di rete o server." };
+      console.error("Error while adding random LLM :", err);
+      return { error: true, message: "Network or Server error" };
     }
   };
   
@@ -114,7 +114,7 @@ function App() {
 
   return (
     <div className="container-fluid p-3">
-      <h1 className="text-primary text-center mb-4">Gestione LLM</h1>
+      <h1 className="text-primary text-center mb-4">LLM Manager</h1>
 
       <div className="row g-3">
         <div className="col-lg-8 col-md-12 mx-auto">

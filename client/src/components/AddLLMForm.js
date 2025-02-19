@@ -22,9 +22,9 @@ const AddLLMForm = ({ onAddLLM, onAddRandom }) => {
         });
 
         if (response.error) {
-          toast.error('Il modello scelto è già stato inserito!');
+          toast.error('Selected Model has already been added!');
         } else {
-          toast.success('LLM aggiunto con successo!');
+          toast.success('LLM successfully added!');
           setCompany('');
           setCategory('');
           setReleaseDate('');
@@ -32,7 +32,7 @@ const AddLLMForm = ({ onAddLLM, onAddRandom }) => {
           setParameters('');
         }
       } catch (error) {
-        toast.error('Si è verificato un errore durante l\'aggiunta del LLM.');
+        toast.error('There was an error while adding the LLM.');
       }
     }
   };
@@ -47,14 +47,14 @@ const AddLLMForm = ({ onAddLLM, onAddRandom }) => {
         toast.success(response.message);
       }
     } catch (error) {
-      toast.error("Si è verificato un errore durante l'aggiunta del LLM Random.");
+      toast.error("There was an error while adding the random LLM .");
     }
   };
   
   return (
     <Container className="d-flex justify-content-center align-items-center vh-50">
       <Card className="p-4 shadow-lg" style={{ maxWidth: '600px', width: '100%' }}>
-        <h3 className="text-secondary text-center mb-3">Aggiungi un LLM</h3>
+        <h3 className="text-secondary text-center mb-3">Add an LLM</h3>
         <Form onSubmit={handleSubmit}>
           <Row className="g-3">
             <Col md={6}>
@@ -105,10 +105,10 @@ const AddLLMForm = ({ onAddLLM, onAddRandom }) => {
           </Row>
           <div className="d-flex justify-content-center mt-4">
             <Button type="submit" variant="success" className="me-2 px-4">
-              Aggiungi LLM
+              Add LLM
             </Button>
             <Button variant="primary" className="px-4" onClick={handleRandomAdd}>
-              Aggiungi LLM Random
+              Add Random LLM 
             </Button>
           </div>
         </Form>

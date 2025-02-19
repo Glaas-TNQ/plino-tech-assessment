@@ -16,7 +16,7 @@ from pydantic import BaseModel
 csv_data=[]
 
 
-# Funzione per caricare il CSV in memoria
+# Upload CSV to Memory
 def load_csv():
     global csv_data
     try:
@@ -24,96 +24,95 @@ def load_csv():
             reader = list(csv.DictReader(csvfile))
             if not reader:
                 raise ValueError("CSV file is empty.")
-            csv_data = reader  # Salviamo i dati in memoria
-            print(f"✅ {len(csv_data)} LLM caricati in memoria dal CSV")
+            csv_data = reader  
+            print(f"✅ {len(csv_data)} LLMs uploaded from CSV")
     except FileNotFoundError:
         print(f"❌ CSV file not found at {CSV_PATH}")
         csv_data = []
 
-# Lifespan: Carica il CSV all'avvio dell'app
+# Lifespan: upload CSV on app start
 async def lifespan(app: FastAPI):
-    print("🚀 Avvio dell'applicazione FastAPI...")
+    print("🚀 Starting FastAPI Application...")
     #print(f"data: {csv_data}")
     load_csv()
     #print(f"data: {csv_data}")
-    yield  # Punto in cui l'app è attiva
-    print("🛑 Chiusura dell'applicazione FastAPI...")
+    yield  
+    print("🛑 Closing FastAPI Application...")
 
-# Inizializzazione FastAPI con lifespan
+# Initialize FastAPI with lifespan
 app = FastAPI(lifespan=lifespan)
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Permette richieste dal frontend React
+    allow_origins=["http://localhost:3000"],  # PermeAllow requests from React
     allow_credentials=True,
-    allow_methods=["*"],  # Permette tutti i metodi (GET, POST, ecc.)
-    allow_headers=["*"],  # Permette tutti gli header
+    allow_methods=["*"],  # Allows all Methods (GET, POST, ecc.)
+    allow_headers=["*"],  # Allows all Headers
 )
 
 llms_collection: AsyncIOMotorCollection = AsyncIOMotorClient(
     "mongodb://root:example@mongodb:27017"
 )["plino"]["llms"]
 
-#definre the model for LLM, taking into account the structure given by the csv file
+#define the model for LLM, taking into account the structure given by the csv file
 class LLM(BaseModel):
     company: str
     category: str
     release_date: str
     model_name: str
     num_million_parameters: int
-    _id: str  # Facoltativo, sarà convertito da ObjectId a stringa
+    _id: str  # Optional, will be converted from ObjectId a stringa
 
 class GetLLMsResponseBody(BaseModel):
     llms: List[LLM]
-# Ottieni il percorso assoluto del file CSV rispetto alla root del progetto
-BASE_DIR = Path(__file__).resolve().parent.parent  # Va alla root del progetto
-CSV_PATH = BASE_DIR / "data" / "llms.csv"  # Percorso completo corretto
+# Get absolute CSV path relative to the project's root 
+BASE_DIR = Path(__file__).resolve().parent.parent  # Go to project's root
+CSV_PATH = BASE_DIR / "data" / "llms.csv"  
 
 @app.get("/")
 async def read_root():
-    return {"Hello": "World"}
-
+    return {"Hello": "Plino"}
 
 
 @app.post("/llm", status_code=status.HTTP_201_CREATED)
 async def create_llm(body: Optional[Dict[str, Any]] = Body(None)):
     """
-    1. Se riceve un LLM via request body, lo valida e lo inserisce se non è duplicato.
-    2. Se non riceve un LLM, legge un LLM casuale da `data/llms.csv` e lo inserisce.
+    1. If an LLM is received via request body, it is validated and inserted if not duplicated.
+    2. If no LLM is received, a random LLM is read from `data/llms.csv` and inserted.
     """
-    if body:  # Se il body non è vuoto, validiamo i dati ricevuti
+    if body:  # If the body is not empty, validate the received data
         try:
-            llm = LLM(**body)  # Validazione manuale con Pydantic
+            llm = LLM(**body)  # Manual validation with Pydantic
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Invalid LLM data: {str(e)}")
 
-        # 🛑 Controlliamo se il modello esiste già
+        # 🛑 Check if the model already exists
         existing_llm = await llms_collection.find_one({"model_name": llm.model_name})
         if existing_llm:
             raise HTTPException(status_code=400, detail="LLM already exists in the database.")
 
-         # ✅ Inseriamo il nuovo LLM e otteniamo l'ID
+        # ✅ Insert the new LLM and get the ID
         insert_result = await llms_collection.insert_one(llm.dict())
         llm_dict = llm.dict()
-        llm_dict["_id"] = str(insert_result.inserted_id)  # Convertiamo ObjectId in stringa
+        llm_dict["_id"] = str(insert_result.inserted_id)  # Convert ObjectId to string
         return {"message": "LLM added successfully", "llm": llm.dict()}
 
-    try: # 🔄 Se non riceviamo dati in POST, prendiamo un LLM dalla memoria
+    try:  # 🔄 If no data is received in POST, take an LLM from memory
         if not csv_data:
             raise HTTPException(status_code=500, detail="CSV data is not loaded in memory.")
 
         random_llm = random.choice(csv_data)
 
-        # Convertiamo i valori giusti (il CSV ha tutto come stringhe)
+        # Convert the correct values (CSV stores everything as strings)
         random_llm["num_million_parameters"] = int(random_llm["num_million_parameters"])
 
-        # 🛑 Controlliamo se già esiste in DB
+        # 🛑 Check if it already exists in the database
         existing_llm = await llms_collection.find_one({"model_name": random_llm["model_name"]})
         if existing_llm:
             raise HTTPException(status_code=400, detail="Random LLM already exists in the database.")
 
-        # ✅ Inseriamo il nuovo LLM
+        # ✅ Insert the new LLM
         insert_result = await llms_collection.insert_one(random_llm)
         random_llm["_id"] = str(insert_result.inserted_id)
 
@@ -121,17 +120,16 @@ async def create_llm(body: Optional[Dict[str, Any]] = Body(None)):
     
     except FileNotFoundError:
         raise HTTPException(status_code=500, detail=f"CSV file not found at {CSV_PATH}")
-    
 
 
 @app.get("/llms", response_model=List[LLM])
 async def get_llms():
     """
-    Recupera tutti gli LLM dal database e li restituisce come lista.
+    Retrieves all LLMs from the database and returns them as a list.
     """
     llms = []
     async for llm in llms_collection.find():
-        llm["_id"] = str(llm["_id"])  # Converte ObjectId in stringa
+        llm["_id"] = str(llm["_id"])  # Convert ObjectId to string
         llms.append(llm)
 
     return llms
