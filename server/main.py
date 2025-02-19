@@ -13,8 +13,34 @@ from motor.motor_asyncio import (
 )
 from pydantic import BaseModel
 
+csv_data=[]
 
-app = FastAPI()
+
+# Funzione per caricare il CSV in memoria
+def load_csv():
+    global csv_data
+    try:
+        with open(CSV_PATH, newline="", encoding="utf-8") as csvfile:
+            reader = list(csv.DictReader(csvfile))
+            if not reader:
+                raise ValueError("CSV file is empty.")
+            csv_data = reader  # Salviamo i dati in memoria
+            print(f"✅ {len(csv_data)} LLM caricati in memoria dal CSV")
+    except FileNotFoundError:
+        print(f"❌ CSV file not found at {CSV_PATH}")
+        csv_data = []
+
+# Lifespan: Carica il CSV all'avvio dell'app
+async def lifespan(app: FastAPI):
+    print("🚀 Avvio dell'applicazione FastAPI...")
+    #print(f"data: {csv_data}")
+    load_csv()
+    #print(f"data: {csv_data}")
+    yield  # Punto in cui l'app è attiva
+    print("🛑 Chiusura dell'applicazione FastAPI...")
+
+# Inizializzazione FastAPI con lifespan
+app = FastAPI(lifespan=lifespan)
 
 
 app.add_middleware(
@@ -73,27 +99,25 @@ async def create_llm(body: Optional[Dict[str, Any]] = Body(None)):
         llm_dict["_id"] = str(insert_result.inserted_id)  # Convertiamo ObjectId in stringa
         return {"message": "LLM added successfully", "llm": llm.dict()}
 
-    try: # 🔄 Se non riceviamo dati in POST, prendiamo un LLM dal CSV
-        with open(CSV_PATH, newline="", encoding="utf-8") as csvfile:
-            reader = list(csv.DictReader(csvfile))
-            if not reader:
-                raise HTTPException(status_code=500, detail="CSV file is empty.")
-            
-            random_llm = random.choice(reader)
+    try: # 🔄 Se non riceviamo dati in POST, prendiamo un LLM dalla memoria
+        if not csv_data:
+            raise HTTPException(status_code=500, detail="CSV data is not loaded in memory.")
 
-            # Convertiamo i valori giusti (il CSV ha tutto come stringhe)
-            random_llm["num_million_parameters"] = int(random_llm["num_million_parameters"])
+        random_llm = random.choice(csv_data)
 
-            # 🛑 Controlliamo se già esiste in DB
-            existing_llm = await llms_collection.find_one({"model_name": random_llm["model_name"]})
-            if existing_llm:
-                raise HTTPException(status_code=400, detail="Random LLM already exists in the database.")
+        # Convertiamo i valori giusti (il CSV ha tutto come stringhe)
+        random_llm["num_million_parameters"] = int(random_llm["num_million_parameters"])
 
-            # ✅ Inseriamo il nuovo LLM
-            insert_result = await llms_collection.insert_one(random_llm)
-            random_llm_dict = random_llm
-            random_llm_dict["_id"] = str(insert_result.inserted_id) 
-            return {"message": "Random LLM added successfully", "llm": random_llm_dict}
+        # 🛑 Controlliamo se già esiste in DB
+        existing_llm = await llms_collection.find_one({"model_name": random_llm["model_name"]})
+        if existing_llm:
+            raise HTTPException(status_code=400, detail="Random LLM already exists in the database.")
+
+        # ✅ Inseriamo il nuovo LLM
+        insert_result = await llms_collection.insert_one(random_llm)
+        random_llm["_id"] = str(insert_result.inserted_id)
+
+        return {"message": "Random LLM added successfully", "llm": random_llm}
     
     except FileNotFoundError:
         raise HTTPException(status_code=500, detail=f"CSV file not found at {CSV_PATH}")
